@@ -5,7 +5,7 @@ library(umap)
 library(DoubletFinder)
 library(SCINA)
 source('~/Msc project/data/seurat_qc.R')
-
+#Add metadata to show health states
 colon[["Health"]] <- "Healthy"
 ibdhs[["Health"]] <- "Inflammed IBD"
 ibdpi[["Health"]] <- "Inflammed IBD"
@@ -13,6 +13,8 @@ ibdpn[["Health"]] <- "Non-Inflammed IBD"
 ibdhb[["Health"]] <- "Inflammed IBD"
 uc_i[["Health"]] <- "Inflammed IBD"
 uc_n[["Health"]] <- "Non-Inflammed IBD"
+
+#Seurat CCA integration standard workflow
 gut.list <- list(colon,ibdhs,ibdpi,ibdpn,uc_i,uc_n)
 gut.anchors <- FindIntegrationAnchors(object.list = gut.list, dims = 1:30)
 gut.integrated <- IntegrateData(anchorset = gut.anchors, dims = 1:30)
