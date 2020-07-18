@@ -1,5 +1,5 @@
 # MononuclearPhagocytesAtlas
-Msc project 
+Msc project with Prof.TOM Freeman and Prof.RAMACHANDRAN Prakash 
 ## Aim
 Integrate scRNA-seq data from studies of human organs. Generate an atlas of healthy human cells.
 ## Progress
