@@ -5,7 +5,16 @@ library(umap)
 library(DoubletFinder)
 library(SCINA)
 source('~/Msc project/data/seurat_qc.R')
-#Add metadata to show health states
+colon <- readRDS("~/ds_group/Charlie Msc project data/Colon/colon_anchor.rds")
+uc_n <- readRDS("~/ds_group/Charlie Msc project data/uc/uc_noninfla_pre_integration.rds")
+uc_i <- readRDS("~/ds_group/Charlie Msc project data/uc/uc_infla_pre_integration.rds")
+ibdhs <- readRDS("~/ds_group/Charlie Msc project data/IBD_H/ibdh_s_disease_preintegration.rds")
+ibdhb <- readRDS("~/ds_group/Charlie Msc project data/IBD_H/ibdh_hb_pre_integration.rds")
+ibdpn <- readRDS("~/ds_group/Charlie Msc project data/IBDP/ibdp_noninfla_pre_integration.rds")
+ibdpi <- readRDS("~/ds_group/Charlie Msc project data/IBDP/ibdp_infla_pre_integration.rds")
+
+
+
 colon[["Health"]] <- "Healthy"
 ibdhs[["Health"]] <- "Inflammed IBD"
 ibdpi[["Health"]] <- "Inflammed IBD"
@@ -14,18 +23,24 @@ ibdhb[["Health"]] <- "Inflammed IBD"
 uc_i[["Health"]] <- "Inflammed IBD"
 uc_n[["Health"]] <- "Non-Inflammed IBD"
 
-#Seurat CCA integration standard workflow
-gut.list <- list(colon,ibdhs,ibdpi,ibdpn,uc_i,uc_n)
-gut.anchors <- FindIntegrationAnchors(object.list = gut.list, dims = 1:30)
-gut.integrated <- IntegrateData(anchorset = gut.anchors, dims = 1:30)
+ibdhs[["dataname"]] <- "IBD_Huang_s_Inflammed"
+ibdpi[["dataname"]] <- "IBD_Parikh_Inflammed"
+ibdpn[["dataname"]] <- "IBD_Parikh_Non-Inflammed"
+ibdhb[["dataname"]] <- "IBD_Huang_hb_Inflammed"
+uc_i[["dataname"]] <- "UC_Inflammed"
+uc_n[["dataname"]] <- "UC_Non-Inflammed"
+
+gut.list <- list(colon,ibdhs,ibdhb,ibdpi,ibdpn,uc_i,uc_n)
+gut.anchors <- FindIntegrationAnchors(object.list = gut.list, dims = 1:20)
+gut.integrated <- IntegrateData(anchorset = gut.anchors, dims = 1:20)
 # switch to integrated assay. The variable features of this assay are automatically
 # set during IntegrateData
 DefaultAssay(gut.integrated) <- "integrated"
 
 # Run the standard workflow for visualization and clustering
 gut.integrated <- ScaleData(gut.integrated, verbose = FALSE)
-gut.integrated <- RunPCA(gut.integrated, npcs = 30, verbose = FALSE)
-gut.integrated <- RunUMAP(gut.integrated, reduction = "pca", dims = 1:30)
+gut.integrated <- RunPCA(gut.integrated, npcs = 20, verbose = FALSE)
+gut.integrated <- RunUMAP(gut.integrated, reduction = "pca", dims = 1:20)
 
 
 png("umap_anchor.png")
@@ -34,23 +49,29 @@ dev.off()
 png("umap_anchor_study.png")
 show(DimPlot(gut.integrated, reduction = "umap", group.by = "dataname"))
 dev.off()
-png("anchor_gut1_sample.png",width = 780)
-show(DimPlot(object = gut.integrated, reduction = "umap", group.by = "Sample"))
-dev.off()
+
 
 write.csv(table(gut.integrated$dataname),"study.txt")
 write.csv(table(gut.integrated$Health),"health.txt")
 
 png("anchor_ibdh.png")
-DimPlot(object = subset(gut.integrated, subset = dataname =="IBD_Huang"), reduction = "umap",group.by = "Sample")
+DimPlot(object = subset(gut.integrated, subset = dataname ==c("IBD_Huang_s_Inflammed","IBD_Huang_hb_Inflammed")), reduction = "umap",group.by = "dataname")
 dev.off()
-png("anchor_ibdps.png")
-DimPlot(object = subset(gut.integrated, subset = dataname =="s"), reduction = "umap",group.by = "Sample")
+png("anchor_ibdp.png")
+DimPlot(object = subset(gut.integrated, subset = dataname =="IBD_Parikh_Inflammed"), reduction = "umap",group.by = "Sample")
 dev.off()
 png("anchor_uc.png",width = 780)
-DimPlot(object = subset(gut.integrated, subset = dataname =="UC_gut"), reduction = "umap",group.by = "Sample")
+DimPlot(object = subset(gut.integrated, subset = dataname =="UC_Inflammed"), reduction = "umap",group.by = "Health")
 dev.off()
-
+png("anchor_healthy.png",width = 780)
+DimPlot(object = subset(gut.integrated, subset = Health =="Healthy"), reduction = "umap",group.by = "dataname")
+dev.off()
+png("anchor_inflammed.png",width = 780)
+DimPlot(object = subset(gut.integrated, subset = Health =="Inflammed IBD"), reduction = "umap",group.by = "dataname")
+dev.off()
+png("anchor_Non-Inflammed.png",width = 780)
+DimPlot(object = subset(gut.integrated, subset = Health =="Non-Inflammed IBD"), reduction = "umap",group.by = "dataname")
+dev.off()
 ##Annotation
 DefaultAssay(gut.integrated) <- "RNA"
 
@@ -64,6 +85,8 @@ dev.off()
 png("feature_marker_epi.png",width = 780,height = 480)
 show(FeaturePlot(gut.integrated, features = c("EPCAM", "KRT19")))
 dev.off()
+
+saveRDS(gut.integrated,paste0("~/Msc project/data/downstream/colon_HvD_7_18.rds") )
 #SCINA
 DefaultAssay(gut.integrated) <- "integrated"
 exp <- GetAssayData(gut.integrated, slot = "scale.data")
