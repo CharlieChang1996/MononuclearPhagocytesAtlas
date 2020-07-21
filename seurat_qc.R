@@ -100,15 +100,7 @@ doublet_rem<- function(obj){
 
 
 clus_anno <- function(obj){
-  png("feature_marker.png",width = 900,height = 900)
-  show(FeaturePlot(obj, features = c("CD79A", "CD79B","CD19", "CD27", "IGHG1", "LILRA4", "IRF7","LYZ","CD68")))
-  dev.off()
-  png("feature_marker2.png",width = 900,height = 900)
-  show(FeaturePlot(obj, features = c("CD3D", "CD3E","CD8A", "GZMA", "GZMB", "KLRF1", "TPSAB1","TPSB2","CDC20")))
-  dev.off()
-  png("feature_marker_epi.png",width = 780,height = 480)
-  show(FeaturePlot(obj, features = c("EPCAM", "KRT19")))
-  dev.off()
+  
   #SCINA annotation
   exp <- GetAssayData(obj, slot = "scale.data")
   sign_route <- readline(prompt = "Enter route of the marker file")
@@ -123,6 +115,45 @@ clus_anno <- function(obj){
   return(obj)
 }
 
+seurat_clus <- function(obj){
+  ## Clustering ##
+  ndims <-readline(prompt = "Enter dims for clustering")
+  ndims <- as.integer(ndims)
+  rsl <-readline(prompt = "Enter resolution for clustering")
+  rsl <- as.numeric(rsl)
+  obj <- FindNeighbors(obj, dims = 1:ndims)
+  obj <- FindClusters(obj, resolution = rsl)
+  png("umap_cluster.png",width = 780)
+  show(DimPlot(obj, reduction = "umap",group.by = 'seurat_clusters', label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE))
+  dev.off()
+  #Feature Plot
+  DefaultAssay(obj) <- "RNA"
+  png("feature_marker.png",width = 900,height = 900)
+  show(FeaturePlot(obj, features = c("CD79A", "CD79B","CD19", "CD27", "IGHG1", "LILRA4", "IRF7","LYZ","CD68")))
+  dev.off()
+  png("feature_marker2.png",width = 900,height = 900)
+  show(FeaturePlot(obj, features = c("CD3D", "CD3E","CD8A", "GZMA", "GZMB", "KLRF1", "TPSAB1","TPSB2","CDC20")))
+  dev.off()
+  png("feature_marker_epi.png",width = 780,height = 480)
+  show(FeaturePlot(obj, features = c("EPCAM", "KRT19")))
+  dev.off()
+  return(obj)
+}
 
+seurat_inte <- function(obj.list){
+  ndims <-readline(prompt = "Enter dims for Anchor CCA integration")
+  ndims <- as.integer(ndims)
+  obj.anchors <- FindIntegrationAnchors(object.list = obj.list, dims = 1:ndims)
+  obj.integrated <- IntegrateData(anchorset = obj.anchors, dims = 1:ndims)
+  # switch to integrated assay. The variable features of this assay are automatically
+  # set during IntegrateData
+  DefaultAssay(obj.integrated) <- "integrated"
+  
+  # Run the standard workflow for visualization and clustering
+  obj.integrated <- ScaleData(obj.integrated, verbose = FALSE)
+  obj.integrated <- RunPCA(obj.integrated, npcs = ndims, verbose = FALSE)
+  obj.integrated <- RunUMAP(obj.integrated, reduction = "pca", dims = 1:ndims)
+  return(obj.integrated)
+}
 
 #saveRDS(obj,"qc_seurat_object.rds")
