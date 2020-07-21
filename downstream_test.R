@@ -1,10 +1,5 @@
-library(Seurat)
-library(dplyr)
-library(patchwork)
-library(umap)
-library(DoubletFinder)
-library(SCINA)
-source('~/Msc project/data/seurat_qc.R')
+source("/home/s1937334/Msc project/Script/seurat_qc.R")
+
 colon <- readRDS("~/ds_group/Charlie Msc project data/Colon/colon_anchor.rds")
 uc_n <- readRDS("~/ds_group/Charlie Msc project data/uc/uc_noninfla_pre_integration.rds")
 uc_i <- readRDS("~/ds_group/Charlie Msc project data/uc/uc_infla_pre_integration.rds")
@@ -31,6 +26,7 @@ uc_i[["dataname"]] <- "UC_Inflammed"
 uc_n[["dataname"]] <- "UC_Non-Inflammed"
 
 gut.list <- list(colon,ibdhs,ibdhb,ibdpi,ibdpn,uc_i,uc_n)
+#gut,integrated <- seurat_inte(gut.list)
 gut.anchors <- FindIntegrationAnchors(object.list = gut.list, dims = 1:20)
 gut.integrated <- IntegrateData(anchorset = gut.anchors, dims = 1:20)
 # switch to integrated assay. The variable features of this assay are automatically
@@ -42,23 +38,22 @@ gut.integrated <- ScaleData(gut.integrated, verbose = FALSE)
 gut.integrated <- RunPCA(gut.integrated, npcs = 20, verbose = FALSE)
 gut.integrated <- RunUMAP(gut.integrated, reduction = "pca", dims = 1:20)
 
-
-png("umap_anchor.png")
-show(DimPlot(gut.integrated, reduction = "umap", group.by = "Health"))
-dev.off()
-png("umap_anchor_study.png")
-show(DimPlot(gut.integrated, reduction = "umap", group.by = "dataname"))
-dev.off()
-
-
 write.csv(table(gut.integrated$dataname),"study.txt")
 write.csv(table(gut.integrated$Health),"health.txt")
+
+#visualisation
+png("umap_anchor.png",width = 780)
+show(DimPlot(gut.integrated, reduction = "umap", group.by = "Health"))
+dev.off()
+png("umap_anchor_study.png",width = 780)
+show(DimPlot(gut.integrated, reduction = "umap", group.by = "dataname"))
+dev.off()
 
 png("anchor_ibdh.png")
 DimPlot(object = subset(gut.integrated, subset = dataname ==c("IBD_Huang_s_Inflammed","IBD_Huang_hb_Inflammed")), reduction = "umap",group.by = "dataname")
 dev.off()
 png("anchor_ibdp.png")
-DimPlot(object = subset(gut.integrated, subset = dataname =="IBD_Parikh_Inflammed"), reduction = "umap",group.by = "Sample")
+DimPlot(object = subset(gut.integrated, subset = dataname =="IBD_Parikh_Inflammed"), reduction = "umap",group.by = "dataname")
 dev.off()
 png("anchor_uc.png",width = 780)
 DimPlot(object = subset(gut.integrated, subset = dataname =="UC_Inflammed"), reduction = "umap",group.by = "Health")
@@ -72,32 +67,47 @@ dev.off()
 png("anchor_Non-Inflammed.png",width = 780)
 DimPlot(object = subset(gut.integrated, subset = Health =="Non-Inflammed IBD"), reduction = "umap",group.by = "dataname")
 dev.off()
-##Annotation
-DefaultAssay(gut.integrated) <- "RNA"
+png("anchor_health.png",width = 980)
+show(DimPlot(gut.integrated, reduction = "umap", split.by = "Health"))
+dev.off()
+
+##Clustering & Annotation
+gut.integrated <- seurat_clus(gut.integrated)# 20dims res=1.8
+write.csv(table(gut.integrated$seurat_clusters),"cluster.txt")
 
 
-png("feature_marker.png",width = 900,height = 900)
-show(FeaturePlot(gut.integrated, features = c("CD79A", "CD79B","CD19", "CD27", "IGHG1", "LILRA4", "IRF7","LYZ","CD68")))
+#find markers
+monocytes.markers <- FindAllMarkers(subset(gut.integrated,idents = c(16,21,23,30,43,46,49)), 
+                                    only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+tcell.markers <-FindAllMarkers(subset(gut.integrated,idents = c(3,8,9,10,12,13,14,26,28,29,36,37,42)), 
+                               only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+rest.markers <-FindAllMarkers(subset(gut.integrated,idents = c(16,21,23,30,43,46,49,3,8,9,10,12,13,14,26,28,29,36,37,42),invert =TRUE), 
+                              only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+write.csv(monocytes.markers,"monocytes_markers.csv")
+write.csv(tcell.markers,"T_markers.csv")
+write.csv(rest.markers,"rest_markers.csv")
+#Assign celltypes manually
+new.cluster.ids <- c("Follicular1","Plasma1","Plasma2","Memory T","Plasma3","DC3",
+                     "Plasma4","Plasma5","Activated Fos-lo T","CD8+IL17+T","Activated Fos-hi T","Plasma6",
+                     "Treg1","CD8+LP1 T","CD8+LP2 T","Follicular2","Infla monocytes","Plasma7",
+                     "CD69+Mast","CD8+LP3 T","Follicular3","DC2","Plasma8","Cycling monocytes",
+                     "Plasma8","Plasma9","Plasma","Follicular4","Cycling T1","NKs 1",
+                     "Macrophages","Treg2","Plasma10","Cycling1 B","B Cells1","Epithelias2",
+                     "NKs2","CD8+IEL T","Plasma12","B Cells2","Epithelias","Plasma13",
+                     "ILCs","DC1","CD69-Mast","Cycling T2","Goblets","Cycling T3",
+                     "Cycling B2","Plasma14","Doublet?","Plasma15")
+names(new.cluster.ids) <- levels(gut.integrated)
+gut.integrated <- RenameIdents(gut.integrated,new.cluster.ids)
+gut.integrated[["annotation1"]] <- Idents(gut.integrated)
+png("umap_annotation1.png",width = 1080)
+show(DimPlot(gut.integrated, reduction = "umap",group.by = 'annotation1', label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE))
 dev.off()
-png("feature_marker2.png",width = 900,height = 900)
-show(FeaturePlot(gut.integrated, features = c("CD3D", "CD3E","CD8A", "GZMA", "GZMB", "KLRF1", "TPSAB1","TPSB2","CDC20")))
-dev.off()
-png("feature_marker_epi.png",width = 780,height = 480)
-show(FeaturePlot(gut.integrated, features = c("EPCAM", "KRT19")))
-dev.off()
+write.csv(table(gut.integrated$annotation1),"annotation.txt")
 
 saveRDS(gut.integrated,paste0("~/Msc project/data/downstream/colon_HvD_7_18.rds") )
+
 #SCINA
-DefaultAssay(gut.integrated) <- "integrated"
-exp <- GetAssayData(gut.integrated, slot = "scale.data")
-signatures <- preprocess.signatures("~/Msc project/data/uc/uc_imm_marker.CSV")
-results = SCINA(exp, signatures, max_iter = 100, convergence_n = 10, convergence_rate = 0.999, 
-                sensitivity_cutoff = 0.5, rm_overlap=FALSE, allow_unknown=TRUE)
-names(results$cell_labels) <- colnames(gut.integrated)
-gut.integrated <- AddMetaData(gut.integrated, metadata = results$cell_labels,col.name = 'SCINA_re.type')
-png("umap_SCINA_gut_anchor.png",width = 680)
-show(DimPlot(gut.integrated, reduction = "umap",group.by = 'SCINA_re.type', label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE)) 
-dev.off()
+#gut.integrated <- clus_anno(gut.integrated)
 
 saveRDS(gut.integrated,paste0("~/ds_group/Charlie Msc project data/downstream/colon_ibdhs.rds") )
 
