@@ -87,15 +87,16 @@ write.csv(monocytes.markers,"monocytes_markers.csv")
 write.csv(tcell.markers,"T_markers.csv")
 write.csv(rest.markers,"rest_markers.csv")
 #Assign celltypes manually
-new.cluster.ids <- c("Follicular1","Plasma1","Plasma2","Memory T","Plasma3","DC3",
-                     "Plasma4","Plasma5","Activated Fos-lo T","CD8+IL17+T","Activated Fos-hi T","Plasma6",
-                     "Treg1","CD8+LP1 T","CD8+LP2 T","Follicular2","Infla monocytes","Plasma7",
-                     "CD69+Mast","CD8+LP3 T","Follicular3","DC2","Plasma8","Cycling monocytes",
-                     "Plasma8","Plasma9","Plasma","Follicular4","Cycling T1","NKs 1",
-                     "Macrophages","Treg2","Plasma10","Cycling1 B","B Cells1","Epithelias2",
-                     "NKs2","CD8+IEL T","Plasma12","B Cells2","Epithelias","Plasma13",
-                     "ILCs","DC1","CD69-Mast","Cycling T2","Goblets","Cycling T3",
-                     "Cycling B2","Plasma14","Doublet?","Plasma15")
+Idents(gut.integrated) <- gut.integrated$seurat_clusters
+new.cluster.ids <- c("Follicular","Goblet1","Plasma","Memory T","Plasma","DC3",
+                     "Plasma","Plasma","Activated Fos-lo T","CD8+IL17+T","Activated Fos-hi T","Plasma",
+                     "Treg1","CD8+LP1 T","CD8+LP2 T","Follicular","Infla monocytes","Plasma",
+                     "CD69+Mast","CD8+LP3 T","Follicular","DC2","Plasma","Cycling monocytes",
+                     "Plasma","Plasma","Plasma","Follicular","Cycling T1","NKs 1",
+                     "Macrophages","Treg2","Plasma","Cycling1 B","B Cells1","Epithelias2",
+                     "NKs2","CD8+IEL T","Plasma","B Cells2","Epithelia","Plasma",
+                     "ILCs","DC1","CD69-Mast","Cycling T2","Goblet2","Cycling T3",
+                     "Cycling B2","Plasma","Doublet?","Plasma")
 names(new.cluster.ids) <- levels(gut.integrated)
 gut.integrated <- RenameIdents(gut.integrated,new.cluster.ids)
 gut.integrated[["annotation1"]] <- Idents(gut.integrated)
