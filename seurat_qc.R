@@ -124,7 +124,7 @@ seurat_clus <- function(obj){
   obj <- FindNeighbors(obj, dims = 1:ndims)
   obj <- FindClusters(obj, resolution = rsl)
   png("umap_cluster.png",width = 780)
-  show(DimPlot(obj, reduction = "umap",group.by = 'seurat_clusters', label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE))
+  show(DimPlot(obj, reduction = "umap", label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE))
   dev.off()
   #Feature Plot
   DefaultAssay(obj) <- "RNA"
