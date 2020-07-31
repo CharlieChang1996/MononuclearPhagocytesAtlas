@@ -93,10 +93,10 @@ new.cluster.ids <- c("Follicular","Goblet1","Plasma","Memory T","Plasma","DC3",
                      "Treg1","CD8+LP1 T","CD8+LP2 T","Follicular","Infla monocytes","Plasma",
                      "CD69+Mast","CD8+LP3 T","Follicular","DC2","Plasma","Cycling monocytes",
                      "Plasma","Plasma","Plasma","Follicular","Cycling T1","NKs 1",
-                     "Macrophages","Treg2","Plasma","Cycling1 B","B Cells1","Epithelias2",
+                     "Macrophages","Treg2","Plasma","Cycling B1","Memory T","Epithelias2",
                      "NKs2","CD8+IEL T","Plasma","B Cells2","Epithelia","Plasma",
                      "ILCs","DC1","CD69-Mast","Cycling T2","Goblet2","Cycling T3",
-                     "Cycling B2","Plasma","Doublet?","Plasma")
+                     "Cycling T2","Plasma","Doublet?","Plasma")
 names(new.cluster.ids) <- levels(gut.integrated)
 gut.integrated <- RenameIdents(gut.integrated,new.cluster.ids)
 gut.integrated[["annotation1"]] <- Idents(gut.integrated)
@@ -108,7 +108,7 @@ write.csv(table(gut.integrated$annotation1),"annotation.txt")
 saveRDS(gut.integrated,paste0("~/Msc project/data/downstream/colon_HvD_7_18.rds") )
 
 #SCINA
-#gut.integrated <- clus_anno(gut.integrated)
+gut.integrated <- clus_anno(gut.integrated)
 
 saveRDS(gut.integrated,paste0("~/ds_group/Charlie Msc project data/downstream/colon_ibdhs.rds") )
 
