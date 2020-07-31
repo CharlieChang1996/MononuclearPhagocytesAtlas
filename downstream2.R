@@ -49,7 +49,7 @@ legend("topright",
        fill = color1)
 dev.off()
 
-inf.cluster.boxplot <- ggplot(percentage_celltype, aes(x = log_i, y = X1, fill = X1)) +
+inf.cluster.boxplot <- ggplot(percentage_celltype, aes(x = log_i, y = Celltype, fill = Celltype)) +
         geom_point() +
         geom_vline(xintercept = 0.45300041, linetype="dashed") +
         geom_segment(aes(x=0, y=12.5, xend=-3, yend=12.5), lineend = "round", linejoin = "mitre", arrow=arrow(), size=0.1) + 
@@ -67,7 +67,7 @@ png( "cellstates_boxplot.png", width=500,height=1000,units="px")
 print(inf.cluster.boxplot)
 dev.off()
 
-non.cluster.boxplot <- ggplot(percentage_celltype, aes(x = log_n, y = X1, fill = X1)) +
+non.cluster.boxplot <- ggplot(percentage_celltype, aes(x = log_n, y = Celltype, fill = Celltype)) +
         geom_point() +
         geom_vline(xintercept = -0.19096015, linetype="dashed") +
         geom_segment(aes(x=-0.7, y=12.5, xend=-3.7, yend=12.5), lineend = "round", linejoin = "mitre", arrow=arrow(), size=0.1) + 
@@ -85,6 +85,23 @@ png( "cellstates_non_boxplot.png", width=500,height=1000,units="px")
 print(non.cluster.boxplot)
 dev.off()
 
+in.cluster.boxplot <- ggplot(percentage_celltype, aes(x = log_i_n, y = Celltype, fill = Celltype)) +
+        geom_point() +
+        geom_vline(xintercept = 0.64396056, linetype="dashed") +
+        geom_segment(aes(x=0, y=12.5, xend=-2, yend=12.5), lineend = "round", linejoin = "mitre", arrow=arrow(), size=0.1) + 
+        geom_segment(aes(x=1.28, y=12.5, xend=3.28, yend=12.5), lineend = "round", linejoin = "mitre", arrow=arrow(), size=0.1) +
+        scale_x_continuous(limits = c(-7.5, 7.5)) +
+        theme_classic() +
+        labs(x = "log2(relative proportion of cell health states\n inflammed/non-inflammed)", y = "Cell type", title = " Decreasing | Increasing\n cell health states proportion in different cell types") +
+        theme(axis.text.x = element_text(size = 12),
+              axis.text.y = element_text(size = 12), 
+              axis.title.x = element_text(size = 16, vjust = -1),
+              axis.title.y = element_text(size = 16),
+              plot.title = element_text(hjust = 0.5, size = 16),
+              legend.position="none") 
+png( "cellstates_in_non_boxplot.png", width=500,height=1000,units="px")
+print(in.cluster.boxplot)
+dev.off()
 
 DefaultAssay(gut) <- "RNA"
 monocytes <- subset(gut,idents = "Infla monocytes")
