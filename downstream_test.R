@@ -77,31 +77,55 @@ write.csv(table(gut.integrated$seurat_clusters),"cluster.txt")
 
 
 #find markers
-monocytes.markers <- FindAllMarkers(subset(gut.integrated,idents = c(16,21,23,30,43,46,49)), 
+monocytes.markers <-c(subset(gut.integrated,idents = c(16,21,23,30,43,46,49)), 
                                     only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 tcell.markers <-FindAllMarkers(subset(gut.integrated,idents = c(3,8,9,10,12,13,14,26,28,29,36,37,42)), 
                                only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
 rest.markers <-FindAllMarkers(subset(gut.integrated,idents = c(16,21,23,30,43,46,49,3,8,9,10,12,13,14,26,28,29,36,37,42),invert =TRUE), 
                               only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+c26.markers <- FindMarkers(gut.integrated,ident.1 = 26,min.pct = 0.25)
+c46.markers <- FindMarkers(gut.integrated,ident.1 = 46,min.pct = 0.25)
+c5.markers <- FindMarkers(gut.integrated,ident.1 = 5,min.pct = 0.25)
+
 write.csv(monocytes.markers,"monocytes_markers.csv")
 write.csv(tcell.markers,"T_markers.csv")
 write.csv(rest.markers,"rest_markers.csv")
+write.csv(c26.markers,"c26_markers.csv")
+write.csv(c46.markers,"c46_markers.csv")
+write.csv(c5.markers,"c5_markers.csv")
 #Assign celltypes manually
 Idents(gut.integrated) <- gut.integrated$seurat_clusters
-new.cluster.ids <- c("Follicular","Goblet1","Plasma","Memory T","Plasma","DC3",
+new.cluster.ids <- c("Follicular B","Goblet","Plasma","Memory T","Plasma","Follicular B",
                      "Plasma","Plasma","Activated Fos-lo T","CD8+IL17+T","Activated Fos-hi T","Plasma",
-                     "Treg1","CD8+LP1 T","CD8+LP2 T","Follicular","Infla monocytes","Plasma",
-                     "CD69+Mast","CD8+LP3 T","Follicular","DC2","Plasma","Cycling monocytes",
-                     "Plasma","Plasma","Plasma","Follicular","Cycling T1","NKs 1",
+                     "Treg1","CD8+LP1 T","CD8+LP2 T","Follicular B","Infla monocytes","Plasma",
+                     "CD69+Mast","CD8+LP3 T","GC B","DC2","Plasma","Cycling monocytes",
+                     "Plasma","Plasma","CD4 T","Follicular B","Cycling T1","NKs 1",
                      "Macrophages","Treg2","Plasma","Cycling B1","Memory T","Epithelias2",
                      "NKs2","CD8+IEL T","Plasma","B Cells2","Epithelia","Plasma",
-                     "ILCs","DC1","CD69-Mast","Cycling T2","Goblet2","Cycling T3",
+                     "ILCs","DC1","CD69-Mast","Cycling T2","DC3","Cycling T3",
                      "Cycling T2","Plasma","Doublet?","Plasma")
 names(new.cluster.ids) <- levels(gut.integrated)
 gut.integrated <- RenameIdents(gut.integrated,new.cluster.ids)
 gut.integrated[["annotation1"]] <- Idents(gut.integrated)
+
+new.cluster.ids2 <- c("B Cells","Epithelias","Plasma","T Cells",
+                      "T Cells","T Cells","T Cells","T Cells",
+                      "T Cells","T Cells","Myeloid Cells","Mast",
+                      "T Cells","B Cells","Myeloid Cells","Myeloid Cells",
+                      "T Cells","T Cells","NKs","Myeloid Cells",
+                      "T Cells","B Cells","Epithelias","NKs",
+                      "T Cells","B Cells","Epithelias","ILCs",
+                      "Myeloid Cells","Mast","T Cells","Myeloid Cells",
+                      "T Cells","Doublet?")
+names(new.cluster.ids2) <- levels(gut.integrated)
+gut.integrated <- RenameIdents(gut.integrated,new.cluster.ids2)
+gut.integrated[["annotation_major"]] <- Idents(gut.integrated)
+
 png("umap_annotation1.png",width = 1080)
 show(DimPlot(gut.integrated, reduction = "umap",group.by = 'annotation1', label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE))
+dev.off()
+png("umap_annotation_major.png",width = 1080)
+show(DimPlot(gut.integrated, reduction = "umap",group.by = 'annotation_major', label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE))
 dev.off()
 write.csv(table(gut.integrated$annotation1),"annotation.txt")
 
