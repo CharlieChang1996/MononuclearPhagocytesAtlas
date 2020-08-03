@@ -5,7 +5,8 @@ library(patchwork)
 library(umap)
 library(DoubletFinder)
 library(SCINA)
-
+library(readxl)
+library(FSA)
 seurat_qc1 <- function(obj){
   obj[["dataname"]] <- obj@project.name
   ## QC ##
@@ -156,4 +157,27 @@ seurat_inte <- function(obj.list){
   return(obj.integrated)
 }
 
+sderr_log <- function(){
+  #statistical analysis
+  route <-readline(prompt = "Enter route of data: ")
+  sheet <-readline(prompt = "Enter sheet: ")
+  out <-readline(prompt = "Enter outputname: ")
+  data <- read_excel(route, sheet = sheet)
+  
+  #compute standard error
+  sm <- Summarize(
+      Freq ~ Health,
+            data=data,
+            digits=3)
+  
+  sd1 <- sm$sd[2]
+  sd2 <- sm$sd[1]
+  #compute P value using Mann-Whitney-Wilcoxon Test 
+  w <- wilcox.test(Freq ~ Health, data=data)
+  w<- as.character(w)
+  v <- log(sd1/sd2,2)
+  write(sheet,out,append = TRUE)
+  write(w,out,append = TRUE)
+  write(v,out,append = TRUE,sep = "\t")
+}
 #saveRDS(obj,"qc_seurat_object.rds")
