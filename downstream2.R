@@ -15,7 +15,6 @@ write.csv(table(gut.integrated$annotation1, gut.integrated$dataname,gut.integrat
 color1 <- brewer.pal(3,"BrBG")
 
 ## visualisation of proportion of cells
-
 png("proportion_celltype1.png",width = 980)
 barplot(cbind(pro_h[1:10],pro_inf[1:10],pro_non[1:10]) ~ Celltype[1:10], data = propotion_cluster,
         xlab = "Cluster",
