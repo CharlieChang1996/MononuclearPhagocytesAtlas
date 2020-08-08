@@ -10,7 +10,6 @@ ibdpi <- readRDS("~/ds_group/Charlie Msc project data/IBDP/ibdp_infla_pre_integr
 
 
 
-colon[["Health"]] <- "Healthy"
 ibdhs[["Health"]] <- "Inflammed IBD"
 ibdpi[["Health"]] <- "Inflammed IBD"
 ibdpn[["Health"]] <- "Non-Inflammed IBD"
@@ -96,14 +95,14 @@ write.csv(c5.markers,"c5_markers.csv")
 #Assign celltypes manually
 Idents(gut.integrated) <- gut.integrated$seurat_clusters
 new.cluster.ids <- c("Follicular B","Goblet","Plasma","Memory T","Plasma","Follicular B",
-                     "Plasma","Plasma","Activated Fos-lo T","CD8+IL17+T","Activated Fos-hi T","Plasma",
+                     "Plasma","Plasma","Activated Fos-lo T","CD4+PD1+T","Activated Fos-hi T","Plasma",
                      "Treg1","CD8+LP1 T","CD8+LP2 T","Follicular B","Infla monocytes","Plasma",
                      "CD69+Mast","CD8+LP3 T","GC B","DC2","Plasma","Cycling monocytes",
                      "Plasma","Plasma","CD4 T","Follicular B","Cycling T1","NKs 1",
                      "Macrophages","Treg2","Plasma","Cycling B1","Memory T","Epithelias2",
                      "NKs2","CD8+IEL T","Plasma","B Cells2","Epithelia","Plasma",
                      "ILCs","DC1","CD69-Mast","Cycling T2","DC3","Cycling T3",
-                     "Cycling T2","Plasma","Doublet?","Plasma")
+                     "Cycling T2","Plasma","Plasma")
 names(new.cluster.ids) <- levels(gut.integrated)
 gut.integrated <- RenameIdents(gut.integrated,new.cluster.ids)
 gut.integrated[["annotation1"]] <- Idents(gut.integrated)
@@ -116,23 +115,23 @@ new.cluster.ids2 <- c("B Cells","Epithelias","Plasma","T Cells",
                       "T Cells","B Cells","Epithelias","NKs",
                       "T Cells","B Cells","Epithelias","ILCs",
                       "Myeloid Cells","Mast","T Cells","Myeloid Cells",
-                      "T Cells","Doublet?")
+                      "T Cells")
 names(new.cluster.ids2) <- levels(gut.integrated)
 gut.integrated <- RenameIdents(gut.integrated,new.cluster.ids2)
 gut.integrated[["annotation_major"]] <- Idents(gut.integrated)
 
-png("umap_annotation1.png",width = 1080)
+png("umap_annotation2.png",width = 1080)
 show(DimPlot(gut.integrated, reduction = "umap",group.by = 'annotation1', label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE))
 dev.off()
-png("umap_annotation_major.png",width = 1080)
+png("umap_annotation_major.png",width = 980)
 show(DimPlot(gut.integrated, reduction = "umap",group.by = 'annotation_major', label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE))
 dev.off()
 write.csv(table(gut.integrated$annotation1),"annotation.txt")
 
-saveRDS(gut.integrated,paste0("~/Msc project/data/downstream/colon_HvD_7_18.rds") )
+
 
 #SCINA
 gut.integrated <- clus_anno(gut.integrated)
-
-saveRDS(gut.integrated,paste0("~/ds_group/Charlie Msc project data/downstream/colon_ibdhs.rds") )
+gut.integrated <- subset(gut.integrated,idents = "Doublet?",invert=TRUE)
+saveRDS(gut.integrated,paste0("~/Msc project/data/downstream/colon_HvD_7_18.rds") )
 
