@@ -7,7 +7,7 @@ ibdhs <- readRDS("~/ds_group/Charlie Msc project data/IBD_H/ibdh_s_disease_prein
 ibdhb <- readRDS("~/ds_group/Charlie Msc project data/IBD_H/ibdh_hb_pre_integration.rds")
 ibdpn <- readRDS("~/ds_group/Charlie Msc project data/IBDP/ibdp_noninfla_pre_integration.rds")
 ibdpi <- readRDS("~/ds_group/Charlie Msc project data/IBDP/ibdp_infla_pre_integration.rds")
-
+ 
 ibdhs[["Health"]] <- "Inflammed IBD"
 ibdpi[["Health"]] <- "Inflammed IBD"
 ibdpn[["Health"]] <- "Non-Inflammed IBD"
