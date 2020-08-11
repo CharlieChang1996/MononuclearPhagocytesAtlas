@@ -175,6 +175,8 @@ Idents(monocytes) <- monocytes$Health
 c16i_n.markers <- FindMarkers(monocytes, ident.1 = "Inflammed IBD", ident.2 = "Non-Inflammed IBD", only.pos = TRUE)
 c16.markers <- FindMarkers(gut.integrated, ident.1 = "Infla monocytes", ident.2 = NULL, only.pos = TRUE)
 write.csv(c16.markers,"c16 markers.csv")
+macro.markers <- FindMarkers(gut.integrated, ident.1 = "Cycling monocytes", ident.2 = "Macrophages")
+write.csv(macro.markers,"cm vs macro markers.csv")
 
 treg<- subset(gut.integrated,idents = "Treg1")
 Idents(treg) <- treg$Health
@@ -269,20 +271,47 @@ Idents(lp2) <- lp2$Health
 lp2_i_h.markers <- FindMarkers(lp2, ident.1 = "Inflammed IBD", ident.2 = "Healthy", only.pos = TRUE)
 write.csv(lp2_i_h.markers,"CD8+LP2 T_i_h markers.csv")
 
-##Plot dot plots of marker genes across clusters
-DefaultAssay(gut.integrated) <- "RNA"
-Idents(gut.integrated) <- gut.integrated$annotation_major
-
-t.markergenes <- c("RPL39","RPS29","RPS28","LTB","GPR183","CREM","YPEL5","FTH1","TNFRSF4",
-                  "CTLA4","MAF","ICOS","STMN1","HMGB2","IL32","CD3D","GZMK","CD8A","CD4","CCL4",
+##Plot plots of marker genes across clusters
+t.markergenes <- c("RPL39","RPS29","LTB","GPR183","CREM","YPEL5","FTH1","TNFRSF4",
+                  "CTLA4","MAF","ICOS","STMN1","HMGB2","IL32","CD3D","GZMK","CD8A","CD8B","GNLY","NKG7","CCL4",
                   "CST7")
 b.markergenes  <-  c("HLA-DRB1","HLA-DRA","CD83","HLA-DPA1","MS4A1","TCL1A","RGS13","HMGB2",
                      "STMN1","KIAA0101","UBE2C","IGLL5","IGLC2","JUN","TPSAB1","CD69","CD19")
-m.markergenes <- c("SLC40A1","SEPP1","LIPA","S100A8","S100A9","FCN1","LAMP3","HLA-DPB1","IDO1",
-                   "TFF1","SPINK4","CADM1","LYZ","TNF","CD68")
-uc.genes <- c("TFF3","HMGB1","ANXA1","MMP9","TNF","TNFRSF4","TNFRSF9")
+m.markergenes <- c("SLC40A1","SEPP1","HSPA1B","S100A8","S100A9","FCN1","LAMP3","HLA-DPB1","IDO1",
+                   "TFF1","SPINK4","CADM1","MT-ND3","NEAT1","C1QC","MMP12","LYZ","TNF")
+uc.genes <- c("TFF3","HMGB1","ANXA1","MMP9","ADCY7","TNF","TNFRSF4","TNFSF15")
 #m1_violin <- VlnPlot(gut.integrated, features = markergenes1, slot = "counts", log = TRUE)
 
+
+
+#Heatmaps
+DefaultAssay(gut.integrated) <- "integrated"
+Idents(gut.integrated) <- gut.integrated$annotation1
+tcells <- c("Memory T","Activated Fos-lo T","CD4+PD1+T","Activated Fos-hi T","Treg1",
+            "CD8+LP1 T","CD8+LP2 T","CD8+LP3 T","CD4 T","Cycling T1","NKs 1","Treg2",
+            "NKs2","CD8+IL17+ T","ILCs","Cycling T2","Cycling T3")
+mcells <-c("DC1","DC2","DC3","Infla monocytes","Macrophages","Cycling monocytes")
+bcells <- c("Follicular B","B Cells2","GC B","Cycling B1","Plasma","CD69+Mast","CD69-Mast")
+
+t_heatmap <- DoHeatmap(subset(gut.integrated, downsample = 100,idents = tcells),features = t.markergenes, size = 4)
+png( "t.markergene_heatmap.png",width=1050,height=650,units="px")
+print(t_heatmap)
+dev.off()
+
+m_heatmap <- DoHeatmap(subset(gut.integrated, downsample = 100,idents = mcells),features = m.markergenes, size = 5)
+png( "m.markergene_heatmap.png",width=1050,height=650,units="px")
+print(m_heatmap)
+dev.off()
+
+b_heatmap <- DoHeatmap(subset(gut.integrated, downsample = 100,idents = bcells),features = b.markergenes, size = 5)
+png( "b.markergene_heatmap.png",width=1050,height=650,units="px")
+print(b_heatmap)
+dev.off()
+
+
+#Dotplots for DEGs across clusters
+DefaultAssay(gut.integrated) <- "RNA"
+Idents(gut.integrated) <- gut.integrated$annotation_major
 t_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "T Cells"), features = t.markergenes,group.by = "annotation1") + RotatedAxis()
 png( "t.markergene_dotplot.png",width=1050,height=650,units="px")
 print(t_dotplot)
@@ -298,9 +327,73 @@ png( "m.markergene_dotplot.png",width=1050,height=650,units="px")
 print(m_dotplot)
 dev.off()
 
-uc_dotplot <- DotPlot(subset(gut.integrated, downsample = 100), features = uc.genes ,group.by = "annotation1") + RotatedAxis()
+uc_dotplot <- DotPlot(subset(gut.integrated), features = uc.genes ,group.by = "annotation1") + RotatedAxis()
 png( "uc_related_gene_dotplot.png",width=1050,height=650,units="px")
 print(uc_dotplot)
 dev.off()
 
-uc2_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "Myeloid Cells"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+Idents(gut.integrated) <- gut.integrated$annotation1
+uc2_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "Cycling monocytes"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_cyclingmonocytes_dotplot.png",width=1050,height=650,units="px")
+print(uc2_dotplot)
+dev.off()
+
+uc3_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "Cycling B1"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_cyclingB_dotplot.png",width=1050,height=650,units="px")
+print(uc3_dotplot)
+dev.off()
+
+uc4_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "CD69+Mast"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_cd69Mast_dotplot.png",width=1050,height=650,units="px")
+print(uc4_dotplot)
+dev.off()
+
+uc5_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "Plasma"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_Plasma_dotplot.png",width=1050,height=650,units="px")
+print(uc5_dotplot)
+dev.off()
+
+uc6_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "Cycling T3"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_CyclingT3_dotplot.png",width=1050,height=650,units="px")
+print(uc6_dotplot)
+dev.off()
+
+uc7_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "Treg1"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_Treg1_dotplot.png",width=1050,height=650,units="px")
+print(uc7_dotplot)
+dev.off()
+
+uc8_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "Infla monocytes"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_inflamonocytes_dotplot.png",width=1050,height=650,units="px")
+print(uc8_dotplot)
+dev.off()
+
+uc9_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "DC1"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_DC1_dotplot.png",width=1050,height=650,units="px")
+print(uc9_dotplot)
+dev.off()
+
+uc10_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "B Cells2"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_Bcells_dotplot.png",width=1050,height=650,units="px")
+print(uc10_dotplot)
+dev.off()
+
+uc11_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "Memory T"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_memoryT_dotplot.png",width=1050,height=650,units="px")
+print(uc11_dotplot)
+dev.off()
+
+uc12_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "CD8+LP2 T"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_LP2 T_dotplot.png",width=1050,height=650,units="px")
+print(uc12_dotplot)
+dev.off()
+
+uc13_dotplot <- DotPlot(subset(gut.integrated, downsample = 100,idents = "Activated Fos-lo T"), features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_foslo T_dotplot.png",width=1050,height=650,units="px")
+print(uc13_dotplot)
+dev.off()
+
+uc0_dotplot <- DotPlot(gut.integrated, features = uc.genes ,group.by = "Health") + RotatedAxis()
+png( "uc_related_health_dotplot.png",width=1050,height=650,units="px")
+print(uc0_dotplot)
+dev.off()
