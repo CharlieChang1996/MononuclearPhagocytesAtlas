@@ -44,7 +44,6 @@ seurat_qc1 <- function(obj){
 
 
 seurat_qc2 <- function(obj){
-  obj[["dataname"]] <- obj@project.name
   ## Normalisation & Feature selection##
   obj <- NormalizeData(obj, normalization.method = "LogNormalize", scale.factor = 10000)
   obj <- FindVariableFeatures(obj, selection.method = "vst", nfeatures = 2000)
@@ -179,5 +178,34 @@ sderr_log <- function(){
   write(sheet,out,append = TRUE)
   write(w,out,append = TRUE)
   write(v,out,append = TRUE,sep = "\t")
+}
+chi_log <- function(){
+  log1 <- readline(prompt = "Enter log ratio 1: ")
+  log2 <- readline(prompt = "Enter log ratio 2: ")
+  log1 <- as.numeric(log1)
+  log2 <- as.numeric(log2)
+  sheet <-readline(prompt = "Enter cluster name: ")
+  #compute P value using Mann-Whitney-Wilcoxon Test 
+  ch <- chisq.test(c(log1, log2), p = c(1, 1)/2, correct = FALSE)
+  ch <- as.character(ch)
+ 
+  write(sheet,"chi-test.txt",append = TRUE)
+  write(ch,"chi-test.txt",append = TRUE)
+}
+
+de_sub <- function(obj,ct){
+  DefaultAssay(obj) <- "RNA"
+  Idents(obj) <- obj$annotation1
+  cto <- subset(obj,idents = ct)
+  Idents(cto) <- cto$Health
+  i_h.markers <- FindMarkers(cto, ident.1 = "Inflammed IBD", ident.2 = "Healthy", only.pos = TRUE)
+  n_h.markers <- FindMarkers(cto, ident.1 = "Non-Inflammed IBD", ident.2 = "Healthy", only.pos = TRUE)
+  i_n.markers <- FindMarkers(cto, ident.1 = "Inflammed IBD", ident.2 = "Non-Inflammed IBD")
+  outname1<- readline(prompt = "Enter name for output ivh ")
+  outname2<- readline(prompt = "Enter name for output nvh ")
+  outname3<- readline(prompt = "Enter name for output ivn ")
+  write.csv(i_h.markers,outname1)
+  write.csv(n_h.markers,outname2)
+  write.csv(i_n.markers,outname3)
 }
 #saveRDS(obj,"qc_seurat_object.rds")
