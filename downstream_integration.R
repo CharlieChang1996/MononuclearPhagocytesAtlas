@@ -95,16 +95,17 @@ Idents(gut.integrated) <- gut.integrated$seurat_clusters
 new.cluster.ids <- c("Follicular B","Goblet","Plasma","Memory T","Plasma","Follicular B",
                      "Plasma","Plasma","Activated Fos-lo T","CD4+PD1+T","Activated Fos-hi T","Plasma",
                      "Treg1","CD8+LP1 T","CD8+LP2 T","Follicular B","Infla monocytes","Plasma",
-                     "CD69+Mast","CD8+LP3 T","GC B","DC2","Plasma","Cycling monocytes",
-                     "Plasma","Plasma","CD4 T","Follicular B","Cycling T1","NKs 1",
-                     "Macrophages","Treg2","Plasma","Cycling B1","Memory T","Epithelias2",
+                     "CD69+Mast","CD8+LP3 T","GC B","DC2","Plasma","Macrophages2",
+                     "Plasma","Plasma","CD4+ T1","Follicular B","Cycling T","NKs 1",
+                     "Macrophages1","Treg2","Plasma","B Cells1","Memory T","Epithelias2",
                      "NKs2","CD8+IL17+ T","Plasma","B Cells2","Epithelia","Plasma",
-                     "ILCs","DC1","CD69-Mast","Cycling T2","DC3","Cycling T3",
-                     "Cycling T2","Plasma","Plasma")
+                     "ILCs","DC1","CD69-Mast","B Cells3","Macrophages3","CD4+ T2",
+                     "Cycling TA","Plasma","Plasma")
 
 names(new.cluster.ids) <- levels(gut.integrated)
 gut.integrated <- RenameIdents(gut.integrated,new.cluster.ids)
 gut.integrated[["annotation1"]] <- Idents(gut.integrated)
+levels(gut.integrated)
 new.cluster.ids2 <- c("B Cells","Epithelias","Plasma","T Cells",
                       "T Cells","T Cells","T Cells","T Cells",
                       "T Cells","T Cells","Myeloid Cells","Mast",
@@ -112,13 +113,13 @@ new.cluster.ids2 <- c("B Cells","Epithelias","Plasma","T Cells",
                       "T Cells","T Cells","NKs","Myeloid Cells",
                       "T Cells","B Cells","Epithelias","NKs",
                       "T Cells","B Cells","Epithelias","ILCs",
-                      "Myeloid Cells","Mast","T Cells","Myeloid Cells",
-                      "T Cells")
+                      "Myeloid Cells","Mast","B Cells",
+                      "Myeloid Cells","T Cells","Epithelias")
 names(new.cluster.ids2) <- levels(gut.integrated)
 gut.integrated <- RenameIdents(gut.integrated,new.cluster.ids2)
 gut.integrated[["annotation_major"]] <- Idents(gut.integrated)
 
-png("umap_annotation3.png",width = 1080)
+png("umap_annotation8.png",width = 1080)
 show(DimPlot(gut.integrated, reduction = "umap",group.by = 'annotation1', label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE))
 dev.off()
 png("umap_annotation_major.png",width = 980)
@@ -126,7 +127,7 @@ show(DimPlot(gut.integrated, reduction = "umap",group.by = 'annotation_major', l
 dev.off()
 write.csv(table(gut.integrated$annotation1),"annotation.txt")
 png("anchor_health_celltypes.png",width = 1280)
-show(DimPlot(gut.integrated, reduction = "umap", group.by = 'annotation1',split.by = "Health",label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE))
+show(DimPlot(gut.integrated, reduction = "umap", group.by = 'annotation1',split.by = "Health",pt.size = 0.2,))
 dev.off()
 png("anchor_dataname_celltypes2.png",width = 1280,height = 780)
 show(DimPlot(gut.integrated, reduction = "umap", group.by = 'annotation1',split.by = "dataname2",ncol = 3))
