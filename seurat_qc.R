@@ -1,13 +1,32 @@
 #Seurat QC & Pre-processing
 library(Seurat)
+library(SeuratWrappers)
+library(SeuratDisk)
 library(dplyr)
 library(patchwork)
 library(umap)
-library(DoubletFinder)
+#library(DoubletFinder)
 library(SCINA)
 library(readxl)
 library(FSA)
-seurat_qc1 <- function(obj){
+library(ggplot2)
+library(RColorBrewer)
+library(projectR)
+library(CoGAPS)
+library(ggsignif)
+library(magrittr)
+library(monocle3)
+library(topGO)
+library(enrichplot)
+library(DO.db)
+library(clusterProfiler)
+library(GSVA)
+library(GSEABase)
+library(msigdbr)
+library(limma)
+library(pheatmap)
+
+seurat_qc1 <- function(obj,fname){
   obj[["dataname"]] <- obj@project.name
   ## QC ##
   #QC using mitchondrial metrics
@@ -16,13 +35,13 @@ seurat_qc1 <- function(obj){
   #Violin plots
   Idents(obj) <- "dataname"
   violin1 <- VlnPlot(obj, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
-  png("violin1.png")
+  pdf(paste("violin1_",fname,".pdf"))
   show(violin1)
   dev.off()
   #Scatter plots
   s.plot1 <- FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "percent.mt")
   s.plot2 <- FeatureScatter(obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
-  png("scatter.png")
+  pdf(paste("scatter_",fname,".pdf"))
   show(s.plot1 + s.plot2)
   dev.off()
   #Filter data
@@ -36,22 +55,22 @@ seurat_qc1 <- function(obj){
   mth <- as.numeric(mth)
   obj <- subset(obj, subset = nFeature_RNA > nfl & nFeature_RNA < nfh & 
                   percent.mt > mtl & percent.mt < mth)
-  
+  ## Normalisation & Feature selection##
+  obj <- NormalizeData(obj, normalization.method = "LogNormalize", scale.factor = 10000) 
   return(obj)
 }
 
 
 
 
-seurat_qc2 <- function(obj){
-  ## Normalisation & Feature selection##
-  obj <- NormalizeData(obj, normalization.method = "LogNormalize", scale.factor = 10000)
+seurat_qc2 <- function(obj,fname){
+  
   obj <- FindVariableFeatures(obj, selection.method = "vst", nfeatures = 2000)
   #ten most variable features & plot them
   top10 <- head(VariableFeatures(obj), 10)
   Fplot <- VariableFeaturePlot(obj)
   Fplot <- LabelPoints(plot = Fplot, points = top10, repel = TRUE)
-  png("feature.png")
+  pdf(paste("feature_",fname,".pdf"))
   show(Fplot)
   dev.off()
   ## Scale the data##
@@ -62,17 +81,17 @@ seurat_qc2 <- function(obj){
   obj <- RunPCA(obj, features = VariableFeatures(object = obj))
   #plot results
   VizDimLoadings(obj, dims = 1:2, reduction = "pca")
-  png("pcaDim.png")
+  pdf(paste("pcaDim_",fname,".pdf"))
   show(DimPlot(obj, reduction = "pca"))
   dev.off()
-  png("elbow.png")
+  pdf(paste("elbow",fname,".pdf"))
   show(ElbowPlot(obj,ndims = 50 ))
   dev.off()
   ndim <- readline(prompt = "How many dims for umap/tsne?")
   ndim <- as.integer(ndim)
   obj <- RunUMAP(obj, dims = 1: ndim)
   
-  png("umap.png",height = 480,width = 680)
+  pdf(paste("umap",fname,".pdf"))
   show(DimPlot(obj, reduction = "umap",group.by = "orig.ident"))
   dev.off()
   return(obj)
@@ -109,13 +128,13 @@ clus_anno <- function(obj){
                   sensitivity_cutoff = 0.9, rm_overlap=FALSE, allow_unknown=TRUE)
   names(results$cell_labels) <- colnames(obj)
   obj <- AddMetaData(obj, metadata = results$cell_labels,col.name = 'SCINA.type')
-  png("umap_SCINA.png",width = 680,height = 680)
+  pdf("umap_SCINA.pdf",width = 680,height = 680)
   show(DimPlot(obj, reduction = "umap",group.by = 'SCINA.type', label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE) )
   dev.off()
   return(obj)
 }
 
-seurat_clus <- function(obj){
+seurat_clus <- function(obj,fname){
   ## Clustering ##
   ndims <-readline(prompt = "Enter dims for clustering")
   ndims <- as.integer(ndims)
@@ -123,19 +142,16 @@ seurat_clus <- function(obj){
   rsl <- as.numeric(rsl)
   obj <- FindNeighbors(obj, dims = 1:ndims)
   obj <- FindClusters(obj, resolution = rsl)
-  png("umap_cluster.png",width = 780)
+  pdf(paste("cluster_umap",fname,".pdf"))
   show(DimPlot(obj, reduction = "umap", label = TRUE,pt.size = 0.5,label.size = 4,repel = TRUE))
   dev.off()
   #Feature Plot
   DefaultAssay(obj) <- "RNA"
-  png("feature_marker.png",width = 900,height = 900)
-  show(FeaturePlot(obj, features = c("CD79A", "CD79B","CD19", "CD27", "IGHG1", "LILRA4", "IRF7","LYZ","CD68")))
+  pdf(paste("feature_IMM_",fname,".pdf"))
+  show(FeaturePlot(obj, features = c("CD79A", "CD79B","CD3D", "CD8A", "NKG7","LYZ","C1QA","FCN1","CD68")))
   dev.off()
-  png("feature_marker2.png",width = 900,height = 900)
-  show(FeaturePlot(obj, features = c("CD3D", "CD3E","CD8A", "GZMA", "GZMB", "KLRF1", "TPSAB1","TPSB2","CDC20")))
-  dev.off()
-  png("feature_marker_epi.png",width = 780,height = 480)
-  show(FeaturePlot(obj, features = c("EPCAM", "KRT19")))
+  pdf(paste("feature_other_",fname,".pdf"))
+  show(FeaturePlot(obj, features = c("TPSAB1","CPA3","MZB1","IGHA1","COL1A1","EPCAM", "ACTA2","RAMP2","EMCN")))
   dev.off()
   return(obj)
 }
@@ -207,5 +223,24 @@ de_sub <- function(obj,ct){
   write.csv(i_h.markers,outname1)
   write.csv(n_h.markers,outname2)
   write.csv(i_n.markers,outname3)
+}
+
+cds_pre <- function(obj,fname,root){
+  cds <- as.cell_data_set(obj)
+  cds <- cluster_cells(cds)
+  cds <- learn_graph(cds)
+  pdf(paste("trajectory_",fname,".pdf",sep = ""),width = 9)
+  show(plot_cells(cds, label_groups_by_cluster = F, label_leaves = T, 
+             label_branch_points = F,trajectory_graph_segment_size = 0.7,group_label_size = 3,cell_size = 0.6))
+  dev.off()
+  ##pseudotime
+  max.avp <- which.max(unlist(FetchData(obj, root)))
+  max.avp <- colnames(obj)[max.avp]
+  cds <- order_cells(cds,root_cells = max.avp)
+  pdf(paste("trajectory_",fname,"_pseudotime.pdf",sep = ""),width = 9)
+  show(plot_cells(cds, color_cells_by = "pseudotime", label_cell_groups = T, label_leaves = T, 
+             label_branch_points = F,trajectory_graph_segment_size = 0.5,group_label_size = 3,cell_size = 1))
+  dev.off()
+  return(cds)
 }
 #saveRDS(obj,"qc_seurat_object.rds")
